@@ -1,0 +1,311 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Share Your SaaS Idea",
+        "formDescription": "Got a SaaS idea you’re not building? I’m looking for inspiration drop your idea here and it might be the next one I bring to life.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "email",
+              "fieldType": "email",
+              "placeholder": "entre Your Email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Drop Your Idea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -400,
+        -340
+      ],
+      "id": "2f08fdaf-7bbb-4475-b24f-d88bda789ea2",
+      "name": "On form submission",
+      "webhookId": "d6885739-5470-4e1d-bbf6-aab1c02df90c",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1sIwi08rgraWJ4t_IaKqfX0y00VsveDFeto689kz0Yw4",
+          "mode": "list",
+          "cachedResultName": "Saas Idea",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sIwi08rgraWJ4t_IaKqfX0y00VsveDFeto689kz0Yw4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1sIwi08rgraWJ4t_IaKqfX0y00VsveDFeto689kz0Yw4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Email": "={{ $('On form submission').item.json.email }}",
+            "Idea": "={{ $('On form submission').item.json['Drop Your Idea'] }}",
+            "Date": "={{ $('On form submission').item.json.submittedAt }}",
+            "improvement": "={{ $json.message.content }}"
+          },
+          "matchingColumns": [
+            "Email"
+          ],
+          "schema": [
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Idea",
+              "displayName": "Idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "improvement",
+              "displayName": "improvement",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        720,
+        -540
+      ],
+      "id": "414ebb3f-41b7-465b-8d5a-b066fe861ecc",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NgR8YVBGVSs0BNFf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=give some improvement of this saas idea just a few line give just the idea of the improvement :  {{ $('On form submission').item.json['Drop Your Idea'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        400,
+        -440
+      ],
+      "id": "fe3e8e19-bb98-49d1-ab2c-a59f4a1dc000",
+      "name": "Improvement Idea",
+      "credentials": {
+        "openAiApi": {
+          "id": "XQms6I9inlzx4BH8",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "fe8ef003-e494-4bf9-86f6-8139c725213c",
+              "leftValue": "={{ $json.message.content }}",
+              "rightValue": "Good",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "4e351c52-d492-4f44-95fe-6a376fc8afa1",
+              "leftValue": "={{ $json.message.content }}",
+              "rightValue": "good",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        180,
+        -340
+      ],
+      "id": "db5d34bc-ad36-4904-b15a-d92657f708e5",
+      "name": "Is it a Good idea ?"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=tell me just if this saas idea : {{ $json['Drop Your Idea'] }} is good or not the response should be in just one word good or not"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -180,
+        -340
+      ],
+      "id": "1145df06-052a-4a88-a690-5acfc393237e",
+      "name": "Judgment",
+      "credentials": {
+        "openAiApi": {
+          "id": "XQms6I9inlzx4BH8",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -180
+      ],
+      "id": "6ef5d528-a825-4115-9c2d-f104afd03957",
+      "name": "Do nothing"
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Judgment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Improvement Idea": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is it a Good idea ?": {
+      "main": [
+        [
+          {
+            "node": "Improvement Idea",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Judgment": {
+      "main": [
+        [
+          {
+            "node": "Is it a Good idea ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "On form submission": [
+      {
+        "email": "nassimbddm@gmail.com",
+        "Drop Your Idea": "AI-Powered Compliance Copilot for SMBs",
+        "submittedAt": "2025-07-07T17:07:19.549+01:00",
+        "formMode": "test"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3cde14b07a43f18c544e1abcab8b8e9dc2b49a0e466e6511c4f02c3298390f2b"
+  }
+}
