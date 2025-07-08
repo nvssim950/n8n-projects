@@ -1,0 +1,351 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "subreddit": "r/AutomationJobs",
+        "title": "={{ $json.body.title }}",
+        "text": "={{ $json.body.body }}"
+      },
+      "type": "n8n-nodes-base.reddit",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        300
+      ],
+      "id": "69424a9d-5fc6-44bd-a81e-cc8348b30f6c",
+      "name": "Create a post",
+      "credentials": {
+        "redditOAuth2Api": {
+          "id": "GZwB0um8JAoLGbJT",
+          "name": "Reddit account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -840,
+        -60
+      ],
+      "id": "a3c77b14-e103-458a-aa8f-5097aa55aa90",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create a Reddit post suitable for the subreddit r/{{ $json.subreddit_name }}.\nThe topic is:{{ $json.topic_or_theme }}.\nWrite:\n\nA catchy title that fits Reddit style.\n\nA natural-sounding body paragraph (at least 3–5 sentences).\nUse Reddit markdown formatting (bold, bullets, line breaks, etc.) if needed.\nAvoid any spammy or promotional tone.\nReturn your response as a JSON object with title and body.",
+        "options": {
+          "systemMessage": "You are an AI assistant designed to generate Reddit posts for a subreddit. Each post must follow Reddit etiquette: be informative, engaging, and relevant to the chosen topic. You always return a title and a body. Avoid clickbait, sensationalism, or anything that violates Reddit's content policies. Write naturally, as if by a human. The tone should match the culture of the subreddit (casual, helpful, or witty if needed). Format text in Reddit markdown when appropriate. Do not include hashtags or promotional content."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        -160
+      ],
+      "id": "14f46f85-a653-4ab1-a96c-c1b099104298",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        60
+      ],
+      "id": "c48016b8-5d4d-4dfc-af3b-a0297f6dfdcd",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "XQms6I9inlzx4BH8",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "6a876a9a-9464-480c-a75a-d65078359608",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -840,
+        300
+      ],
+      "id": "b53f13f6-ccec-42a4-ac78-afdbe7bcad56",
+      "name": "Webhook",
+      "webhookId": "6a876a9a-9464-480c-a75a-d65078359608"
+    },
+    {
+      "parameters": {
+        "sendTo": "trivixdevs@gmail.com",
+        "subject": "Reddit Post ",
+        "message": "=<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <title>Reddit Post Approval</title>\n  <style>\n    body {\n      font-family: sans-serif;\n      padding: 2em;\n      background-color: #f9f9f9;\n    }\n    .box {\n      background: white;\n      padding: 1.5em;\n      border-radius: 12px;\n      box-shadow: 0 0 10px rgba(0,0,0,0.1);\n      max-width: 600px;\n      margin: auto;\n    }\n    h2 {\n      margin-top: 0;\n    }\n    button {\n      background-color: green;\n      color: white;\n      padding: 10px 20px;\n      font-size: 1em;\n      border: none;\n      border-radius: 8px;\n      cursor: pointer;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"box\">\n    <h2>Reddit Post Preview</h2>\n    <p><strong>Title:</strong> {{ $json.title }}</p>\n    <p><strong>Body:</strong></p>\n    <p>\n     {{ $json.body }}\n    </p>\n\n    <form method=\"POST\" action=\"https://nvssim16.app.n8n.cloud/webhook/6a876a9a-9464-480c-a75a-d65078359608\">\n      <input type=\"hidden\" name=\"title\" value=\"{{ $json.title }}\">\n      <input type=\"hidden\" name=\"body\" value=\"{{ $json.body }}\">\n      <button type=\"submit\">✅ Post to Reddit</button>\n    </form>\n  </div>\n</body>\n</html>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        180,
+        -60
+      ],
+      "id": "614c540f-390a-4002-8494-6308a228c0a4",
+      "name": "Send a message",
+      "webhookId": "a977bfac-daec-4d18-a23a-68eefec58ad0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXP6OQnkPGJP4uND",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ui64DNAhxTyW0krrDtRQauJbVzNP4Vu-JMVQThHY83Q",
+          "mode": "list",
+          "cachedResultName": "Reddit",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ui64DNAhxTyW0krrDtRQauJbVzNP4Vu-JMVQThHY83Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ui64DNAhxTyW0krrDtRQauJbVzNP4Vu-JMVQThHY83Q/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -620,
+        -60
+      ],
+      "id": "9e01ceec-a1f5-4e06-b0df-293c99e4bb45",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NgR8YVBGVSs0BNFf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = items[0].json.output;\n\n// Remove code block markers\nraw = raw.replace(/```json|```/g, '').trim();\n\n// Parse stringified JSON\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (err) {\n  throw new Error(`Failed to parse JSON: ${err.message}\\nContent: ${raw}`);\n}\n\nreturn [\n  {\n    json: {\n      title: parsed.title,\n      body: parsed.body\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -40,
+        -60
+      ],
+      "id": "26185bd9-d262-48ab-8c10-63ffe903d50a",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "documentId": {
+          "__rl": true,
+          "value": "1ui64DNAhxTyW0krrDtRQauJbVzNP4Vu-JMVQThHY83Q",
+          "mode": "list",
+          "cachedResultName": "Reddit",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ui64DNAhxTyW0krrDtRQauJbVzNP4Vu-JMVQThHY83Q/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ui64DNAhxTyW0krrDtRQauJbVzNP4Vu-JMVQThHY83Q/edit#gid=0"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        400,
+        -60
+      ],
+      "id": "f331f56a-227e-498d-9eba-0823bf74133f",
+      "name": "Delete rows or columns from sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NgR8YVBGVSs0BNFf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "trivixdevs@gmail.com",
+        "subject": "Reddit Post ",
+        "emailType": "text",
+        "message": "=the Post is Live",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -400,
+        300
+      ],
+      "id": "2e399761-de7f-4c8f-a17e-2e7b7c5bc035",
+      "name": "Send a message1",
+      "webhookId": "a977bfac-daec-4d18-a23a-68eefec58ad0",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "uXP6OQnkPGJP4uND",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Create a post": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create a post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Delete rows or columns from sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Get row(s) in sheet": [
+      {
+        "row_number": 2,
+        "subreddit_name": "Showerthoughts",
+        "topic_or_theme": "What’s one piece of advice that completely changed your life?"
+      },
+      {
+        "row_number": 3,
+        "subreddit_name": "TrueOffMyChest",
+        "topic_or_theme": "What’s the most unsettling thing you've ever seen?"
+      },
+      {
+        "row_number": 4,
+        "subreddit_name": "offmychest",
+        "topic_or_theme": "What feels illegal but isn’t?"
+      },
+      {
+        "row_number": 5,
+        "subreddit_name": "RandomThoughts",
+        "topic_or_theme": "What do poor people have that rich people desperately want?\n"
+      },
+      {
+        "row_number": 6,
+        "subreddit_name": "CasualConversation",
+        "topic_or_theme": "What’s the creepiest AI-generated thing you’ve seen?"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3cde14b07a43f18c544e1abcab8b8e9dc2b49a0e466e6511c4f02c3298390f2b"
+  }
+}
