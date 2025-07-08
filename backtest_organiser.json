@@ -1,0 +1,279 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "BACKTEST",
+        "formDescription": "BACKTEST DATA",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Pair",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "EURUSD"
+                  },
+                  {
+                    "option": "GBPJPY"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "RISK",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "1%"
+                  },
+                  {
+                    "option": "2%"
+                  },
+                  {
+                    "option": "0.5%"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "RR",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "2"
+                  },
+                  {
+                    "option": "1"
+                  },
+                  {
+                    "option": "3"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Win or Loss ?",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Win"
+                  },
+                  {
+                    "option": "loss"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Date",
+              "fieldType": "date"
+            },
+            {
+              "fieldLabel": "image",
+              "fieldType": "file",
+              "acceptFileTypes": ".jpg,.png"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -300,
+        -180
+      ],
+      "id": "af7c8abc-2155-443a-b569-b8ba28e962f7",
+      "name": "On form submission",
+      "webhookId": "d6885739-5470-4e1d-bbf6-aab1c02df90c",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1b7XELqqqgz1YjqxLPy17kq4a-jtF6pcMt3Ci_B_BbB8",
+          "mode": "list",
+          "cachedResultName": "BACKTEST",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b7XELqqqgz1YjqxLPy17kq4a-jtF6pcMt3Ci_B_BbB8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b7XELqqqgz1YjqxLPy17kq4a-jtF6pcMt3Ci_B_BbB8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Pair": "={{ $('On form submission').item.json.Pair }}",
+            "RISK": "={{ $('On form submission').item.json.RISK }}",
+            "RR": "={{ $('On form submission').item.json.RR }}",
+            "Win or Loss ?": "={{ $('On form submission').item.json['Win or Loss ?'] }}",
+            "image": "={{ $json.webViewLink }}",
+            "Date": "={{ $('On form submission').item.json.Date.toDateTime().format('yyyy-MM-DD') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Pair",
+              "displayName": "Pair",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "RISK",
+              "displayName": "RISK",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "RR",
+              "displayName": "RR",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Win or Loss ?",
+              "displayName": "Win or Loss ?",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "image",
+              "displayName": "image",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        280,
+        -180
+      ],
+      "id": "f409f465-03fe-4db1-978b-76e8e80d8f48",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NgR8YVBGVSs0BNFf",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "image",
+        "name": "={{ $json.image[0].filename }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1HPVZFHLxiyWCyNmYtQ45Gsxf7Dx8seHG",
+          "mode": "list",
+          "cachedResultName": "Images",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1HPVZFHLxiyWCyNmYtQ45Gsxf7Dx8seHG"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        20,
+        -180
+      ],
+      "id": "d247b193-a015-4dcb-b470-241ff9cabeef",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "yxCuFfYPlbWfJ2h4",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        []
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3cde14b07a43f18c544e1abcab8b8e9dc2b49a0e466e6511c4f02c3298390f2b"
+  }
+}
