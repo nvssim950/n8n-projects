@@ -1,0 +1,522 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Content Repurposing Studio",
+        "formDescription": "Turn one long-form asset into five platform-ready drafts. Paste your transcript or blog body below and we will generate LinkedIn, X, newsletter, YouTube Short and Instagram drafts for you.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Title",
+              "placeholder": "e.g. How I built a $10k MRR SaaS in 90 days",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Source Content",
+              "fieldType": "textarea",
+              "placeholder": "Paste your transcript, blog body, or detailed podcast notes here.",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Content Type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "YouTube Video"
+                  },
+                  {
+                    "option": "Blog Post"
+                  },
+                  {
+                    "option": "Podcast Episode"
+                  },
+                  {
+                    "option": "Other"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Source URL",
+              "placeholder": "https://youtube.com/watch?v=...  (optional)"
+            },
+            {
+              "fieldLabel": "Target Audience",
+              "placeholder": "e.g. early-stage B2B SaaS founders",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Voice and Tone",
+              "fieldType": "textarea",
+              "placeholder": "e.g. Direct, no fluff, contrarian. Avoid corporate jargon."
+            },
+            {
+              "fieldLabel": "Call to Action",
+              "placeholder": "e.g. Book a free strategy call"
+            },
+            {
+              "fieldLabel": "Primary Keyword or Hashtag",
+              "placeholder": "e.g. automation, #AIagents"
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "buttonLabel": "Generate Drafts"
+        }
+      },
+      "id": "83f91104-3e99-498d-b1a4-348ceb5d725b",
+      "name": "Content Intake Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        176,
+        400
+      ],
+      "webhookId": "4c4d5c03-eff4-4edb-bb60-ded9ed95a764"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ctx-title",
+              "name": "title",
+              "value": "={{ $json[\"Title\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "ctx-source",
+              "name": "sourceContent",
+              "value": "={{ $json[\"Source Content\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "ctx-type",
+              "name": "contentType",
+              "value": "={{ $json[\"Content Type\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "ctx-url",
+              "name": "sourceUrl",
+              "value": "={{ $json[\"Source URL\"] ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "ctx-audience",
+              "name": "audience",
+              "value": "={{ $json[\"Target Audience\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "ctx-voice",
+              "name": "voiceTone",
+              "value": "={{ $json[\"Voice and Tone\"] || \"Authentic, conversational, value-first\" }}",
+              "type": "string"
+            },
+            {
+              "id": "ctx-cta",
+              "name": "cta",
+              "value": "={{ $json[\"Call to Action\"] ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "ctx-keyword",
+              "name": "keyword",
+              "value": "={{ $json[\"Primary Keyword or Hashtag\"] ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "ctx-generatedAt",
+              "name": "generatedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e53d55e2-6b10-4956-b272-4c13e64d5140",
+      "name": "Prepare Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Repurpose the following source content into platform-ready drafts.\n\nTitle: {{ $json.title }}\nContent Type: {{ $json.contentType }}\nSource URL: {{ $json.sourceUrl }}\nTarget Audience: {{ $json.audience }}\nVoice & Tone: {{ $json.voiceTone }}\nCall to Action: {{ $json.cta }}\nPrimary Keyword/Hashtag: {{ $json.keyword }}\n\n--- SOURCE CONTENT START ---\n{{ $json.sourceContent }}\n--- SOURCE CONTENT END ---",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a senior content strategist who turns one long-form asset (YouTube video, blog post, or podcast) into distribution-ready drafts across LinkedIn, X, newsletter, YouTube Shorts, and Instagram. You never summarize blandly. You extract the sharpest insight, the most concrete example, and the most quotable line, then rewrite them per-platform using native conventions. Platform rules you MUST follow: (1) linkedin_post: 150-250 words, hook line under 12 words, short paragraphs (1-2 sentences), end with an engagement question or CTA, 3 relevant hashtags at the end. (2) x_thread: 5-8 tweets, each under 280 chars, tweet 1 is a hook that earns the click, numbered \"1/ 2/ ...\" prefix, last tweet is a CTA. (3) newsletter_section: 150-300 words, markdown formatted with one H2, skimmable, ends with a one-line takeaway. (4) youtube_short_script: 45-60 seconds, structured as [Hook 0-3s] [Body 3-45s] [CTA 45-60s], written as spoken dialogue with visual direction in brackets. (5) instagram_caption: 125-220 words, hook in line 1, line breaks every 1-2 sentences, three dot separators before hashtags, 8-15 niche hashtags. (6) title_variants: exactly 5 alternative titles for the source asset optimized for CTR (curiosity, specificity, benefit, contrarian, how-to angles). (7) content_summary: one sentence describing the source. Always match the provided Voice & Tone, weave the Primary Keyword in naturally where relevant, and end each long-form asset with the Call to Action when one is provided. Return ONLY valid JSON that matches the required schema. No preamble, no markdown fences, no commentary.",
+          "maxIterations": 3
+        }
+      },
+      "id": "b8d7c017-cc46-4de9-b04f-4c711e472516",
+      "name": "Repurpose Content",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        736,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-5-20250929",
+          "cachedResultName": "Claude Sonnet 4.5"
+        },
+        "options": {
+          "maxTokensToSample": 4096,
+          "temperature": 0.7
+        }
+      },
+      "id": "0a8206b2-7b8d-421f-b181-400a1d678e44",
+      "name": "Claude Sonnet 4.5",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        576,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"linkedin_post\": \"Hook line under 12 words.\\n\\nShort paragraph 1.\\n\\nShort paragraph 2.\\n\\nEngagement question or CTA.\\n\\n#tag1 #tag2 #tag3\",\n  \"x_thread\": [\n    \"1/ Hook tweet under 280 chars\",\n    \"2/ Story or proof\",\n    \"3/ Insight\",\n    \"4/ Tactical step\",\n    \"5/ Recap + CTA\"\n  ],\n  \"newsletter_section\": \"## Subheading\\n\\nOpening paragraph with value.\\n\\nSecond paragraph with a concrete example.\\n\\nTakeaway line.\",\n  \"youtube_short_script\": \"[Hook 0-3s] Spoken hook line.\\n[Body 3-45s] Spoken body with [visual cues in brackets].\\n[CTA 45-60s] Spoken CTA.\",\n  \"instagram_caption\": \"Hook line.\\n\\nBody lines with line breaks every 1-2 sentences.\\n\\n.\\n.\\n.\\n#hashtag1 #hashtag2 #hashtag3\",\n  \"title_variants\": [\n    \"Curiosity-driven title\",\n    \"Benefit-driven title\",\n    \"Specific-number title\",\n    \"Contrarian title\",\n    \"How-to title\"\n  ],\n  \"content_summary\": \"One-sentence summary of the source content.\"\n}"
+      },
+      "id": "40d8f243-d896-4082-a90c-2eabd6983b3e",
+      "name": "Assets JSON Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        752,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fa-title",
+              "name": "title",
+              "value": "={{ $(\"Content Intake Form\").item.json[\"Title\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-type",
+              "name": "contentType",
+              "value": "={{ $(\"Content Intake Form\").item.json[\"Content Type\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-url",
+              "name": "sourceUrl",
+              "value": "={{ $(\"Content Intake Form\").item.json[\"Source URL\"] ?? \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-audience",
+              "name": "audience",
+              "value": "={{ $(\"Content Intake Form\").item.json[\"Target Audience\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-summary",
+              "name": "summary",
+              "value": "={{ $json.content_summary }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-linkedin",
+              "name": "linkedinPost",
+              "value": "={{ $json.linkedin_post }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-xthread",
+              "name": "xThread",
+              "value": "={{ ($json.x_thread ?? []).join(\"\\n\\n\") }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-newsletter",
+              "name": "newsletterSection",
+              "value": "={{ $json.newsletter_section }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-short",
+              "name": "youtubeShortScript",
+              "value": "={{ $json.youtube_short_script }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-insta",
+              "name": "instagramCaption",
+              "value": "={{ $json.instagram_caption }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-variants",
+              "name": "titleVariants",
+              "value": "={{ ($json.title_variants ?? []).map(t => \"- \" + t).join(\"\\n\") }}",
+              "type": "string"
+            },
+            {
+              "id": "fa-generated",
+              "name": "generatedAt",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0691612f-bacf-44b6-a84b-19701ae00775",
+      "name": "Flatten Assets",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_NOTION_DATABASE_ID"
+        },
+        "title": "={{ $json.title }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|select",
+              "selectValue": "Review"
+            },
+            {
+              "key": "Content Type|select",
+              "selectValue": "={{ $json.contentType }}"
+            },
+            {
+              "key": "Source URL|url",
+              "ignoreIfEmpty": true,
+              "urlValue": "={{ $json.sourceUrl }}"
+            },
+            {
+              "key": "Audience|rich_text",
+              "textContent": "={{ $json.audience }}"
+            },
+            {
+              "key": "Summary|rich_text",
+              "textContent": "={{ $json.summary }}"
+            },
+            {
+              "key": "LinkedIn Post|rich_text",
+              "textContent": "={{ $json.linkedinPost }}"
+            },
+            {
+              "key": "X Thread|rich_text",
+              "textContent": "={{ $json.xThread }}"
+            },
+            {
+              "key": "Newsletter|rich_text",
+              "textContent": "={{ $json.newsletterSection }}"
+            },
+            {
+              "key": "YouTube Short|rich_text",
+              "textContent": "={{ $json.youtubeShortScript }}"
+            },
+            {
+              "key": "Instagram Caption|rich_text",
+              "textContent": "={{ $json.instagramCaption }}"
+            },
+            {
+              "key": "Title Variants|rich_text",
+              "textContent": "={{ $json.titleVariants }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3a6c873e-0d80-4ff6-a305-25acf33f7f12",
+      "name": "Save Drafts to Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1392,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "#content-drafts"
+        },
+        "text": "=:sparkles: *New content drafts ready for review*\n\n*Title:* {{ $(\"Flatten Assets\").item.json.title }}\n*Type:* {{ $(\"Flatten Assets\").item.json.contentType }}\n*Audience:* {{ $(\"Flatten Assets\").item.json.audience }}\n\n:notebook_with_decorative_cover: *Open in Notion:* {{ $json.url }}\n\n> {{ $(\"Flatten Assets\").item.json.summary }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false,
+          "mrkdwn": true,
+          "unfurl_links": false
+        }
+      },
+      "id": "c186a9b5-4c23-49f2-b378-d2577eafa312",
+      "name": "Notify Review Channel",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1712,
+        480
+      ],
+      "webhookId": "b28fc945-e17e-4b64-8d3d-65dd3a3e6e21"
+    },
+    {
+      "parameters": {
+        "content": "## 1. Intake\nCreators submit one long-form asset (transcript / blog body / podcast notes) plus their voice, audience, and CTA. Embed this form on your portfolio page so leads can try the product live.",
+        "height": 792,
+        "width": 412,
+        "color": 7
+      },
+      "id": "16450d0b-b303-4d82-8524-cd0e1daca1b9",
+      "name": "Sticky Note fdc922ab",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        64,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI Repurposing\nOne Claude Sonnet 4.5 call with a strict JSON output parser returns 5 platform-native drafts + 5 title variants in a single pass. Single call = reliable, fast, cheap, and retryable.",
+        "height": 792,
+        "width": 720,
+        "color": 7
+      },
+      "id": "baf1ab13-836a-4ef9-8582-115b4778f534",
+      "name": "Sticky Note b38f694e",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        480,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. Deliver\nEach draft is saved to a Notion review database, then a Slack notification pings your review channel with the page link.\n\n### Notion setup (required)\nCreate a database with these exact property names:\n- Title (type: Title)\n- Status (type: Select — options: Draft, Review, Published)\n- Content Type (type: Select — options: YouTube Video, Blog Post, Podcast Episode, Other)\n- Source URL (type: URL)\n- Audience (type: Text)\n- Summary (type: Text)\n- LinkedIn Post (type: Text)\n- X Thread (type: Text)\n- Newsletter (type: Text)\n- YouTube Short (type: Text)\n- Instagram Caption (type: Text)\n- Title Variants (type: Text)\n\nThen paste the database ID into the Notion node and set your Slack channel on the Notify node.",
+        "height": 792,
+        "width": 940,
+        "color": 7
+      },
+      "id": "ede0eb27-0e70-4a58-b546-de77644a509a",
+      "name": "Sticky Note 23414dd5",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        -32
+      ]
+    }
+  ],
+  "connections": {
+    "Content Intake Form": {
+      "main": [
+        [
+          {
+            "node": "Prepare Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Context": {
+      "main": [
+        [
+          {
+            "node": "Repurpose Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Repurpose Content": {
+      "main": [
+        [
+          {
+            "node": "Flatten Assets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Sonnet 4.5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Repurpose Content",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assets JSON Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Repurpose Content",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten Assets": {
+      "main": [
+        [
+          {
+            "node": "Save Drafts to Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Drafts to Notion": {
+      "main": [
+        [
+          {
+            "node": "Notify Review Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "aiBuilderAssisted": true,
+    "instanceId": "e80c6b04ad26bb4b94aced0941fe9c07196cd369a237d6065945164e5dfdd514"
+  }
+}
