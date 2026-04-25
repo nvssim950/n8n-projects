@@ -1,0 +1,605 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "content": {
+          "config": {
+            "name": "About this demo",
+            "parameters": {
+              "content": "## Lead Qualifier Agent — LOOM-READY\n\n**Apollo & Clearbit** are real HTTP Request nodes pointing at their actual API URLs. Without a paid key they fail silently (`neverError: true`) and the Normalize nodes substitute realistic demo data so the run never breaks.\n\n**Slack / Gmail / HubSpot** are real nodes — plug in the credentials before filming:\n- Slack: `Slack OAuth2` (free workspace → create app → install to workspace)\n- Gmail: `Gmail OAuth2` (personal Google account)\n- HubSpot: `HubSpot App Token` (free CRM → Private App token)\n- Gemini: free API key from https://aistudio.google.com/\n\n**HubSpot custom properties to create before recording** (Settings → Properties → Create):\n- `lead_score` (number)\n- `icp_tier` (single-line text or dropdown: hot/warm/cold)\n- `scoring_reason` (multi-line text)\n\nPOST test payload to `/webhook/lead-intake`:\n`{\"email\":\"sarah.chen@northwind.io\",\"firstName\":\"Sarah\",\"lastName\":\"Chen\",\"company\":\"Northwind Logistics\",\"jobTitle\":\"VP of Operations\",\"phone\":\"+1-415-555-0180\",\"message\":\"Looking to automate our carrier onboarding flow.\",\"source\":\"website-contact-form\"}`",
+              "height": 320,
+              "width": 460,
+              "color": 5
+            },
+            "position": [
+              180,
+              40
+            ]
+          }
+        }
+      },
+      "id": "16baf160-2b59-41ff-93de-1121afa0f626",
+      "name": "Sticky Note 3f649a15",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        96,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "options": {
+          "responseCode": {
+            "values": {}
+          }
+        }
+      },
+      "id": "7bebbb98-e469-414d-935a-1c426064ad27",
+      "name": "Inbound Form",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        304
+      ],
+      "webhookId": "1d29182f-7dcc-40f9-8c95-ba65533620a5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apollo.io/v1/people/match",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { email: $json.body.email, reveal_personal_emails: false } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "5b619deb-ab50-4717-bc36-84b4141882cd",
+      "name": "Apollo Person Match",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        432,
+        304
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// If Apollo returned a real person, pass it through. Otherwise synthesize from the form input.\nconst apollo = ($input.first() && $input.first().json) || {};\nif (apollo.person && apollo.person.id) {\n  return [{ json: apollo }];\n}\nconst form = ($('Inbound Form').first().json.body) || {};\nconst email = form.email || 'lead@example.com';\nconst domain = email.split('@')[1] || 'example.com';\nconst firstName = form.firstName || 'Sample';\nconst lastName = form.lastName || 'Lead';\nconst title = form.jobTitle || 'Head of Operations';\nconst companyName = form.company || domain.split('.')[0].replace(/^./, function(c){ return c.toUpperCase(); });\nconst senior = /vp|head|director|chief|cmo|ceo|founder/i.test(title);\nreturn [{\n  json: {\n    person: {\n      id: 'apollo_' + Date.now(),\n      first_name: firstName,\n      last_name: lastName,\n      name: firstName + ' ' + lastName,\n      title: title,\n      seniority: senior ? 'vp' : 'manager',\n      email: email,\n      linkedin_url: 'https://linkedin.com/in/' + firstName.toLowerCase() + '-' + lastName.toLowerCase(),\n      organization: {\n        id: 'apollo_org_' + domain,\n        name: companyName,\n        primary_domain: domain,\n        estimated_num_employees: 220,\n        industry: 'logistics and supply chain',\n        keywords: ['logistics','supply chain','freight','carrier onboarding','3pl'],\n        technologies: ['Salesforce','HubSpot','Snowflake','Segment']\n      }\n    }\n  }\n}];"
+      },
+      "id": "cc882c54-0fcb-426f-baa8-fde5233d8857",
+      "name": "Person Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        304
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "url": "=https://company.clearbit.com/v2/companies/find?domain={{ $('Inbound Form').item.json.body.email.split('@')[1] }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "c26e3fe7-4e38-4371-941e-e46fcd27c916",
+      "name": "Clearbit Company Enrich",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        864,
+        304
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// If Clearbit returned a domain/name, pass through. Otherwise synthesize from the form input.\nconst clearbit = ($input.first() && $input.first().json) || {};\nif (clearbit.domain && clearbit.name) {\n  return [{ json: clearbit }];\n}\nconst form = ($('Inbound Form').first().json.body) || {};\nconst email = form.email || 'lead@example.com';\nconst domain = email.split('@')[1] || 'example.com';\nreturn [{\n  json: {\n    domain: domain,\n    name: (form.company || domain.split('.')[0]).toString(),\n    category: {\n      industry: 'Logistics & Supply Chain',\n      industryGroup: 'Transportation',\n      sector: 'Industrials',\n      subIndustry: '3PL'\n    },\n    metrics: {\n      employees: 220,\n      employeesRange: '100-500',\n      estimatedAnnualRevenue: '$10M-$50M'\n    },\n    tech: ['salesforce','hubspot','snowflake','segment','aws'],\n    tags: ['B2B','Logistics','SaaS']\n  }\n}];"
+      },
+      "id": "8a4cc2d0-27d2-4d80-aa73-40402b5055d2",
+      "name": "Company Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        304
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are scoring an inbound lead for a B2B SaaS company that sells logistics automation to mid-market logistics and supply-chain companies (100-1000 employees, ops leadership buyer).\n\n## Form submission\nEmail: {{ $(\"Inbound Form\").item.json.body.email }}\nName: {{ $(\"Inbound Form\").item.json.body.firstName }} {{ $(\"Inbound Form\").item.json.body.lastName }}\nJob title: {{ $(\"Inbound Form\").item.json.body.jobTitle }}\nCompany (claimed): {{ $(\"Inbound Form\").item.json.body.company }}\nMessage: {{ $(\"Inbound Form\").item.json.body.message }}\nSource: {{ $(\"Inbound Form\").item.json.body.source }}\n\n## Person enrichment (Apollo)\n{{ JSON.stringify($(\"Person Enrichment\").item.json) }}\n\n## Company enrichment (Clearbit)\n{{ JSON.stringify($(\"Company Enrichment\").item.json) }}\n\n## Scoring rubric (0-100)\n- Title/seniority fit (VP/Director/Head of Ops): up to 30\n- Industry fit (logistics, supply chain, 3PL, freight): up to 25\n- Company size fit (100-1000 employees): up to 20\n- Intent signal in message (carrier, onboarding, automation, efficiency): up to 15\n- Tech stack fit (uses Salesforce/HubSpot/Snowflake): up to 10\n\nTier mapping: 75+ hot, 45-74 warm, <45 cold. Be strict.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a precise B2B lead scoring agent. Always return valid JSON matching the schema. Be conservative - only give 75+ when multiple strong signals align."
+        }
+      },
+      "id": "dfacb314-dd25-42a1-bc6f-8dd7d45d6e0d",
+      "name": "Score Lead vs ICP",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1312,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\"score\": 82, \"tier\": \"hot\", \"reason\": \"VP-level buyer at 220-employee logistics co. matches ICP. Intent strong: carrier onboarding is our wedge.\", \"qualified\": true, \"buyingRole\": \"DECISION_MAKER\", \"recommendedAction\": \"book_demo\", \"signals\": [\"title_match\", \"industry_match\", \"intent_keyword\", \"company_size_fit\"]}"
+      },
+      "id": "8d70d67f-6242-47bb-9820-9d45f969dee9",
+      "name": "ICP Schema",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1472,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.tier }}",
+                    "rightValue": "hot",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "hot"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.tier }}",
+                    "rightValue": "warm",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "warm"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.tier }}",
+                    "rightValue": "cold",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "cold"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1ba0eef9-f793-43aa-bb63-e6a6c672526a",
+      "name": "Route by Tier",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1568,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "#sales-hot"
+        },
+        "text": "=:fire: *Hot lead: {{ $(\"Inbound Form\").item.json.body.firstName }} {{ $(\"Inbound Form\").item.json.body.lastName }}* - {{ $(\"Inbound Form\").item.json.body.jobTitle }} @ {{ $(\"Inbound Form\").item.json.body.company }}\n*Score:* {{ $(\"Score Lead vs ICP\").item.json.output.score }}/100\n*Why:* {{ $(\"Score Lead vs ICP\").item.json.output.reason }}\n*Signals:* {{ $(\"Score Lead vs ICP\").item.json.output.signals.join(\", \") }}\n*Email:* {{ $(\"Inbound Form\").item.json.body.email }} | *Phone:* {{ $(\"Inbound Form\").item.json.body.phone }}\n*Message:* > {{ $(\"Inbound Form\").item.json.body.message }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false,
+          "mrkdwn": true
+        }
+      },
+      "id": "71eda237-1da0-4c17-8891-8765b473bd6a",
+      "name": "Slack #sales-hot",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        1824,
+        144
+      ],
+      "webhookId": "3c36abac-a719-48ea-9e09-b906501b8571",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "CpCxqsN9br01tuRS",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "email": "={{ $(\"Inbound Form\").item.json.body.email }}",
+        "additionalFields": {
+          "companyName": "={{ $(\"Inbound Form\").item.json.body.company }}",
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "lead_score",
+                "value": "={{ $(\"Score Lead vs ICP\").item.json.output.score }}"
+              },
+              {
+                "property": "icp_tier",
+                "value": "hot"
+              },
+              {
+                "property": "scoring_reason",
+                "value": "={{ $(\"Score Lead vs ICP\").item.json.output.reason }}"
+              }
+            ]
+          },
+          "firstName": "={{ $(\"Inbound Form\").item.json.body.firstName }}",
+          "jobTitle": "={{ $(\"Inbound Form\").item.json.body.jobTitle }}",
+          "lastName": "={{ $(\"Inbound Form\").item.json.body.lastName }}",
+          "leadStatus": "NEW",
+          "lifeCycleStage": "salesqualifiedlead",
+          "phoneNumber": "={{ $(\"Inbound Form\").item.json.body.phone }}"
+        },
+        "options": {
+          "resolveData": true
+        }
+      },
+      "id": "29efc5b8-3514-4c4c-aed5-8ae313f9218f",
+      "name": "HubSpot Upsert (Hot)",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        2064,
+        144
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "U4dNRuXu73qJe3SO",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Inbound Form\").item.json.body.email }}",
+        "subject": "=Quick resource for {{ $(\"Inbound Form\").item.json.body.company }}",
+        "message": "=<p>Hi {{ $(\"Inbound Form\").item.json.body.firstName }},</p><p>Thanks for reaching out. Based on what you shared about {{ $(\"Inbound Form\").item.json.body.company }}, I put together a short 7-min walkthrough of how teams in your space are automating carrier onboarding:</p><p><a href=\"https://demo.example.com/carrier-onboarding\">Watch the walkthrough</a></p><p>If it resonates, grab a time on my calendar: <a href=\"https://cal.com/demo\">cal.com/demo</a></p><p>Best,<br>Meriem</p>",
+        "options": {
+          "appendAttribution": false,
+          "senderName": "Meriem"
+        }
+      },
+      "id": "2c3866c4-da03-464e-857f-7ef1e97d0809",
+      "name": "Send Warm Nurture",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1824,
+        320
+      ],
+      "webhookId": "4f3e3d94-069e-492f-ba54-4725a7f46803",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lcyvOvUcQMrl3qJv",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "email": "={{ $(\"Inbound Form\").item.json.body.email }}",
+        "additionalFields": {
+          "companyName": "={{ $(\"Inbound Form\").item.json.body.company }}",
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "lead_score",
+                "value": "={{ $(\"Score Lead vs ICP\").item.json.output.score }}"
+              },
+              {
+                "property": "icp_tier",
+                "value": "warm"
+              }
+            ]
+          },
+          "firstName": "={{ $(\"Inbound Form\").item.json.body.firstName }}",
+          "jobTitle": "={{ $(\"Inbound Form\").item.json.body.jobTitle }}",
+          "lastName": "={{ $(\"Inbound Form\").item.json.body.lastName }}",
+          "lifeCycleStage": "marketingqualifiedlead"
+        },
+        "options": {
+          "resolveData": true
+        }
+      },
+      "id": "42cfac5b-7042-4873-8413-15ed4844cc47",
+      "name": "HubSpot Upsert (Warm)",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        2064,
+        320
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "U4dNRuXu73qJe3SO",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "email": "={{ $(\"Inbound Form\").item.json.body.email }}",
+        "additionalFields": {
+          "companyName": "={{ $(\"Inbound Form\").item.json.body.company }}",
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "lead_score",
+                "value": "={{ $(\"Score Lead vs ICP\").item.json.output.score }}"
+              },
+              {
+                "property": "icp_tier",
+                "value": "cold"
+              }
+            ]
+          },
+          "firstName": "={{ $(\"Inbound Form\").item.json.body.firstName }}",
+          "lastName": "={{ $(\"Inbound Form\").item.json.body.lastName }}",
+          "lifeCycleStage": "subscriber"
+        },
+        "options": {}
+      },
+      "id": "589a6b06-bea9-41e4-8a08-bb8724c87269",
+      "name": "HubSpot Upsert (Cold)",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1824,
+        512
+      ],
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "U4dNRuXu73qJe3SO",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1168,
+        512
+      ],
+      "id": "ee3236cf-e120-4202-be9e-9ed30124d46e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "MhAPi6hmlbiCjxgb",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Inbound Form": {
+      "main": [
+        [
+          {
+            "node": "Apollo Person Match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apollo Person Match": {
+      "main": [
+        [
+          {
+            "node": "Person Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Person Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Clearbit Company Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clearbit Company Enrich": {
+      "main": [
+        [
+          {
+            "node": "Company Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Score Lead vs ICP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Lead vs ICP": {
+      "main": [
+        [
+          {
+            "node": "Route by Tier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ICP Schema": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Score Lead vs ICP",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Tier": {
+      "main": [
+        [
+          {
+            "node": "Slack #sales-hot",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Warm Nurture",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HubSpot Upsert (Cold)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack #sales-hot": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Upsert (Hot)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Warm Nurture": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Upsert (Warm)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Score Lead vs ICP",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "aiBuilderAssisted": true,
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e80c6b04ad26bb4b94aced0941fe9c07196cd369a237d6065945164e5dfdd514"
+  }
+}
